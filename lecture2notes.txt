@@ -1,0 +1,43 @@
+the opertaing system is in charge of calling the main method
+source code --  compiler-- executable(i.e a.out)
+
+once an executable has been generated, there is no need to recompile. You can rerun.
+
+preprocessor is like a library, #include, using namespace, etc
+including files are called header files
+we can make our own include files
+
+:: scope operator
+
+Object files conatins:
+- executable code
+- gloabl variables
+- constants
+- linkage information
+
+<< insertion
+>> extraction
+
+cout<<
+cin>>
+
+without io stream, cin and cout are undefined
+
+STRINGS-----------
+
+a string is an array of chars
+
+can use .append to concatenate
+comparison operators: ==, !=. <.>,<= and >=
+strings can also be indexed
+
+s2.at(index) return a char at that index.
+can also use .substr to get substring of string
+
+s1.find(s2) searches for the first occurene of a particular substring
+
+
+
+
+
+
