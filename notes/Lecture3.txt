@@ -1,0 +1,76 @@
+C++ input and output streams
+no built in I/O in c++
+must import a library 
+
+<< input or extraction operator
+- binary operator
+- left associative(order is from left to right)
+- << can be repeated in same expression
+- order of execution is from order left to right
+
+------------------------
+Extraction Operator: >>
+- skips over leading whitescpace
+- returns refernece to the istream object, cin
+
+#inlcude <iostream>
+inpout data -- (cin) -- executing program -- output data (cout)
+
+Reading Data using the gte() function 
+get() can read a single character
+
+cin.get() returns only one character even a whitescpace
+
+cin.ingore() is used to ignore characters in an input stream
+cin.ignore(howMany, untillwhatChar)
+takes two parameters
+- how many chars to skip, or untill what char. whichever comes first
+
+char cannor represent EOF(end of file)
+
+we can use <cctype> to detect the datatype of the char being read or entered:
+- isdigit() 
+- isalpha()
+- isalnum() - alphanumeric
+- isspace()
+
+ - cannot be used to input a string with blanks
+
+instead use getline() to get all, including whitescpace
+getline(specify object, string variable)
+
+example:
+    getline(cin, response);
+it will consume new line character(\n) but not include it in the string variable
+-------------------
+Disk files for I/O
+#include <fstream>
+
+choose valid identifiers for youru filestreams and declare them
+open the files and associate them with disk namespace
+use your filestream identifiers using >> and <<, get, ignore
+close the file
+
+ifstream  myInfile;     declare the objects
+ofstream myOutfile;
+
+myInfile.open("myIn.dat");       open files
+myOutfile.open("myOut.dat");
+
+myInfile.close();      close files
+myOutfile.close();
+
+myInfile >> x >> y;
+outFile << x << y;
+
+if the ouput file does not exist on disk, a new file with that name is created.
+
+when stream enters fail state, computer will not give error
+any further I/O operation will not be executed
+
+stream methods for checking errors:
+good(), if true no errors
+eof() if true the end of file was reached
+fail() if true there was a logical error on stream
+bad() if true then there was a read write error on stream
+
