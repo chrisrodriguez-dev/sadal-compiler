@@ -1,0 +1,434 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <set>
+#include <vector>
+#include "c_rodriguez_lex.cpp"
+#include <algorithm>
+
+using namespace std;
+
+// g++ -std=c++17 c_rodriguez_main.cpp -o main
+
+bool isValidFlag(const string& word, const set<string>& validFlags) {
+    return validFlags.count(word);
+}
+
+int main(int argc, char* argv[]) {
+    // Validate input arguments
+    if (argc < 2) {
+        cerr << "No specified input file." << endl;
+        exit(0);
+    }
+
+    string fileName = argv[1];
+    set<string> validFlags = {"-all", "-num", "-str", "-id", "-kw"};
+
+    ifstream inFile(fileName);
+    if (!inFile) {
+        cerr << "CANNOT OPEN THE FILE " << fileName << endl;
+        exit(0);
+    }
+
+    if (inFile.peek() == EOF) {
+        cerr << "Empty file." << endl;
+        exit(0);
+    }
+
+    if (!validFlags.count(argv[2]) && strlen(argv[2]) < 3){
+        cerr << "Only one file name is allowed." << endl;
+        exit(0);
+    }
+
+    
+    set<string> flags;
+    map<string,string> identifiers;
+    map<Token,string> keyWords;
+        // Maintain insertion order
+
+    // Parse command-line flags
+    for (int i = 2; i < argc; i++) {
+        string flag = argv[i];
+        if (!isValidFlag(flag, validFlags)) {
+            cout << "UNRECOGNIZED FLAG {" << flag << "}" << endl;
+            exit(0);
+        }
+        flags.insert(flag);
+    }
+
+    LexItem token;
+    int tokenCounter = 0, identCounter = 0, numerals = 0, totalKeywords = 0, charAndStr = 0, linenum = 0;
+    //case for -all, --id, and -kw
+    if ( argc == 5 && flags.count("-all") && flags.count("-id") && flags.count("-id")) {
+        while (true) {
+            token = getNextToken(inFile, linenum);
+            if (token == DONE) {
+                
+                linenum = token.GetLinenum();
+                break;
+            }
+            else if (token == IDENT) {     
+                string lexeme = token.GetLexeme();
+                if(!identifiers.count(lexeme)){
+                    identCounter++;
+                    identifiers[token.GetLexeme()] = lexeme;
+                }
+                
+            }
+            else if (token == FCONST || token == ICONST) {
+                numerals++;
+            }
+            else if (token == CCONST || token == SCONST) {
+                charAndStr++;
+            }
+            else if (id_or_kw(token.GetLexeme(), linenum) != IDENT) {
+                string lexeme = token.GetLexeme();
+                if(!keyWords.count(token.GetToken())){
+                    totalKeywords++;
+                    keyWords[token.GetToken()] = lexeme;
+                }
+            }
+            cout << token;
+            tokenCounter++;
+        }
+
+        cout << "\n";
+        cout << "Lines: " << linenum << endl;
+        cout << "Total Tokens: " << tokenCounter << endl;
+        cout << "Numerals: " << numerals << '\n';
+        cout << "Characters and Strings : " << charAndStr << '\n';
+        cout << "Identifiers: " << identCounter << endl;
+        cout << "Keywords: " << totalKeywords << endl;
+
+        // Print Identifiers
+        bool first = true;
+        cout << "IDENTIFIERS:\n";
+        for(auto it = identifiers.begin();it !=identifiers.end();it++){
+            
+            if (!first){
+                cout << ", ";
+            } 
+            cout << it->second;
+            first = false;
+        }
+        first = true;
+        cout<<endl;
+
+        // Print Keywords
+    
+        cout << "KEYWORDS:\n";
+        for(auto it = keyWords.begin();it != keyWords.end();it++){
+            if (!first){
+                cout << ", ";
+            } 
+            cout << it->second;
+            first = false; 
+        }
+        cout << endl;
+        
+    }
+    //case for -all and -num flags
+    else if(argc == 4 && flags.count("-all") && flags.count("-num")){
+        set<string> numConsts;
+        while(true){
+            token = getNextToken(inFile, linenum);
+            if (token == DONE) {
+                linenum = token.GetLinenum();
+                break;
+            }
+            else if (token == IDENT) {     
+                string lexeme = token.GetLexeme();
+                if(!identifiers.count(lexeme)){
+                    identCounter++;
+                    
+                }
+            }
+            else if (token == FCONST || token == ICONST) {
+
+                if(!numConsts.count(token.GetLexeme())){
+                    numConsts.insert(token.GetLexeme());
+                    numerals++;
+                }
+                
+            }
+            else if (token == CCONST || token == SCONST) {
+                charAndStr++;
+            }
+            else if (id_or_kw(token.GetLexeme(), linenum) != IDENT) {
+                string lexeme = token.GetLexeme();
+                if(!keyWords.count(token.GetToken())){
+                    totalKeywords++;
+                    
+                }
+            }
+            cout << token;
+            tokenCounter++;
+        }
+
+            cout << "\n";
+            cout << "Lines: " << linenum << endl;
+            cout << "Total Tokens: " << tokenCounter << endl;
+            cout << "Numerals: " << numerals << '\n';
+            cout << "Characters and Strings : " << charAndStr << '\n';
+            cout << "Identifiers: " << identCounter << endl;
+            cout << "Keywords: " << totalKeywords << endl;
+
+            bool first = true;
+            cout << "NUMERIC CONSTANTS:" << '\n';
+            for(auto it = numConsts.begin();it != numConsts.end();it++){
+                if(!first){
+                cout << ", ";
+                }
+                cout << *it;
+                first = false;
+            }
+            cout << endl;
+
+
+    }
+    //case for just -num flag;
+    if( argc == 3 && flags.count("-num")){
+        set<string> numConsts;
+        while(true){
+            token = getNextToken(inFile,linenum);
+            if(token == ICONST || token == FCONST){
+                if(!numConsts.count(token.GetLexeme())){
+                    numConsts.insert(token.GetLexeme());
+                }
+
+            }
+            else if(token == DONE){
+                break;
+            }
+        }
+        bool first = true;
+        cout << "NUMERIC CONSTANTS:" << '\n';
+        for(auto it = numConsts.begin();it != numConsts.end();it++){
+            if(!first){
+                cout << ", ";
+            }
+            cout << *it;
+            first = false;
+        }
+        cout << endl;
+    }
+    //case for -str only
+    else if(argc == 3 && flags.count("-str")){
+        map<string,string> strConts;
+        while(true){
+            token = getNextToken(inFile,linenum);
+            if(token == DONE){
+                break;
+            }
+            else if (token == ERR){
+                cout << token <<endl;
+            }
+            else if(token == SCONST || token == CCONST){
+                if(!strConts.count(token.GetLexeme())){
+                    strConts[token.GetLexeme()] = token.GetLexeme();
+                }
+            }
+
+        }
+        bool first = true;
+        cout << "CHARACTERS AND STRINGS :"<<endl;
+        for(auto it = strConts.begin();it!=strConts.end();it++){
+            if(!first){
+                cout << ", ";
+            }
+            cout << it->second;
+            first = false;
+        }
+    }
+    //case for -id flag only
+    else if (argc ==3 && flags.count("-id")){
+        map <string,string> ids;
+        while (true){
+            token = getNextToken(inFile,linenum);
+            if(token == IDENT){
+                if(!ids.count(token.GetLexeme())){
+                    ids[token.GetLexeme()] = token.GetLexeme();
+                }
+            }
+            else if (token == DONE){
+                break;
+            }
+            else if (token == ERR){
+                cout << token<<endl;
+            }
+
+        }
+        bool first = true;
+        cout << "IDENTIFIERS:"<<endl;
+        for(auto it = ids.begin();it!= ids.end();it++){
+            if(!first){
+                cout << ", ";
+            }
+            cout << it-> second;
+            first = false;
+        }
+    }
+    //case for just -kw flag
+    else if (argc == 3 && flags.count("-kw")){
+        map<string,string> kw;
+        while (true){
+            token = getNextToken(inFile,linenum);
+            if(id_or_kw(token.GetLexeme(),linenum) != IDENT){
+                if(!kw.count(token.GetLexeme())){
+                    kw[token.GetLexeme()] = token.GetLexeme();
+                }
+            }
+            else if(token == DONE){
+                break;
+            }
+            else if (token == ERR){
+                cout << token<<endl;
+            }
+        }
+        bool first = true;
+        cout << "KEYWORDS:"<<endl;
+        for(auto it = kw.begin();it!= kw.end();it++){
+            if(!first){
+                cout << ", ";
+            }
+            cout << it-> second;
+            first = false;
+        }
+
+    }
+
+    //no flags found case
+    else if (argc == 2) {
+        while (true) {
+            token = getNextToken(inFile, linenum);
+            if (token == DONE) {
+
+                linenum = token.GetLinenum();
+                break;
+            }
+            else if (token == IDENT) {
+                identCounter++;
+            }
+            else if (token == FCONST || token == ICONST) {
+                numerals++;
+            }
+            else if (token == CCONST || token == SCONST) {
+                charAndStr++;
+            }
+            else if (id_or_kw(token.GetLexeme(), linenum) != IDENT) {
+                totalKeywords++;
+            }
+            tokenCounter++;
+        }
+        cout << "Lines: " << linenum << endl;
+        cout << "Total Tokens: " << tokenCounter << endl;
+        cout << "Numerals: " << numerals << '\n';
+        cout << "Characters and Strings : " << charAndStr << '\n';
+        cout << "Identifiers: " << identCounter << endl;
+        cout << "Keywords: " << totalKeywords << endl;
+    }
+    if(argc == 7 && flags.count("-all") && flags.count("-num") && flags.count("-kw") && flags.count("-id") && flags.count("-str")){
+        set<string> numConsts;
+        map<string,string> identifiers;
+        map<Token,string> keyWords;
+        map<string,string> strConts;
+
+        while (true){
+            token = getNextToken(inFile, linenum);
+            if(token == DONE){
+                break;
+            }
+            else if(token == SCONST || token == CCONST){
+                if(!strConts.count(token.GetLexeme())){
+                    charAndStr++;
+                    strConts[token.GetLexeme()] = token.GetLexeme();
+                }
+            }
+            else if(token == ICONST || token == FCONST){
+                if(!numConsts.count(token.GetLexeme())){
+                    numerals++;
+                    numConsts.insert(token.GetLexeme());
+                }
+
+            }
+            else if (id_or_kw(token.GetLexeme(), linenum) != IDENT) {
+                string lexeme = token.GetLexeme();
+                if(!keyWords.count(token.GetToken())){
+                    totalKeywords++;
+                    keyWords[token.GetToken()] = lexeme;
+                }
+            }
+            else if (token == IDENT) {     
+                string lexeme = token.GetLexeme();
+                if(!identifiers.count(lexeme)){
+                    identCounter++;
+                    identifiers[token.GetLexeme()] = lexeme;
+                }
+                
+            }
+            cout << token;
+            tokenCounter ++;
+
+
+        }
+        cout << "\n";
+        cout << "Lines: " << linenum << endl;
+        cout << "Total Tokens: " << tokenCounter << endl;
+        cout << "Numerals: " << numerals << '\n';
+        cout << "Characters and Strings : " << charAndStr << '\n';
+        cout << "Identifiers: " << identCounter << endl;
+        cout << "Keywords: " << totalKeywords << endl;
+
+        bool first = true;
+        cout << "NUMERIC CONSTANTS:" << '\n';
+        for(auto it = numConsts.begin();it != numConsts.end();it++){
+            if(!first){
+                cout << ", ";
+            }
+            cout << *it;
+            first = false;
+        }
+        cout << endl;
+        first = true;
+        cout << "CHARACTERS AND STRINGS :"<<endl;
+        for(auto it = strConts.begin();it!=strConts.end();it++){
+            if(!first){
+                cout << ", ";
+            }
+            cout << it->second;
+            first = false;
+        }
+        cout <<endl;
+        first = true;
+
+        cout << "IDENTIFIERS:\n";
+        for(auto it = identifiers.begin();it !=identifiers.end();it++){
+            
+            if (!first){
+                cout << ", ";
+            } 
+            cout << it->second;
+            first = false;
+        }
+        first = true;
+        cout<<endl;
+
+        cout << "KEYWORDS:\n";
+        for(auto it = keyWords.begin();it != keyWords.end();it++){
+            if (!first){
+                cout << ", ";
+            } 
+            cout << it->second;
+            first = false; 
+        }
+        cout << endl;
+
+    }
+
+    // need to do case with all flags
+    //need to do case with num and specific flags.
+
+    inFile.close();
+    return 0;
+}
+//g++ -std=c++17 c_rodriguez_main.cpp -o main
